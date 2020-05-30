@@ -33,10 +33,10 @@ Python's general purpose built-in containers, :class:`dict`, :class:`list`,
 :class:`UserString`     wrapper around string objects for easier string subclassing
 =====================   ====================================================================
 
-.. deprecated-removed:: 3.3 3.9
+.. deprecated-removed:: 3.3 3.10
     Moved :ref:`collections-abstract-base-classes` to the :mod:`collections.abc` module.
     For backwards compatibility, they continue to be visible in this module through
-    Python 3.8.
+    Python 3.9.
 
 
 :class:`ChainMap` objects
@@ -115,6 +115,9 @@ The class can be used to simulate nested scopes and is useful in templating.
         >>> combined.update(adjustments)
         >>> list(combined)
         ['music', 'art', 'opera']
+
+    .. versionchanged:: 3.9
+       Added support for ``|`` and ``|=`` operators, specified in :pep:`584`.
 
 .. seealso::
 
@@ -286,6 +289,47 @@ For example::
             >>> c = Counter(a=4, b=2, c=0, d=-2)
             >>> sorted(c.elements())
             ['a', 'a', 'a', 'a', 'b', 'b']
+
+    .. method:: isdisjoint(other)
+
+        True if none of the elements in *self* overlap with those in *other*.
+        Negative or missing counts are ignored.
+        Logically equivalent to:  ``not (+self) & (+other)``
+
+        .. versionadded:: 3.10
+
+    .. method:: isequal(other)
+
+        Test whether counts agree exactly.
+        Negative or missing counts are treated as zero.
+
+        This method works differently than the inherited :meth:`__eq__` method
+        which treats negative or missing counts as distinct from zero::
+
+            >>> Counter(a=1, b=0).isequal(Counter(a=1))
+            True
+            >>> Counter(a=1, b=0) == Counter(a=1)
+            False
+
+        Logically equivalent to:  ``+self == +other``
+
+        .. versionadded:: 3.10
+
+    .. method:: issubset(other)
+
+        True if the counts in *self* are less than or equal to those in *other*.
+        Negative or missing counts are treated as zero.
+        Logically equivalent to:  ``not self - (+other)``
+
+        .. versionadded:: 3.10
+
+    .. method:: issuperset(other)
+
+        True if the counts in *self* are greater than or equal to those in *other*.
+        Negative or missing counts are treated as zero.
+        Logically equivalent to:  ``not other - (+self)``
+
+        .. versionadded:: 3.10
 
     .. method:: most_common([n])
 
@@ -729,6 +773,10 @@ stack manipulations such as ``dup``, ``drop``, ``swap``, ``over``, ``pick``,
         initialized from the first argument to the constructor, if present, or to
         ``None``, if absent.
 
+    .. versionchanged:: 3.9
+       Added merge (``|``) and update (``|=``) operators, specified in
+       :pep:`584`.
+
 
 :class:`defaultdict` Examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1119,6 +1167,10 @@ anywhere a regular dictionary is used.
    passed to the :class:`OrderedDict` constructor and its :meth:`update`
    method.
 
+.. versionchanged:: 3.9
+    Added merge (``|``) and update (``|=``) operators, specified in :pep:`584`.
+
+
 :class:`OrderedDict` Examples and Recipes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1150,6 +1202,8 @@ variants of :func:`functools.lru_cache`::
             return value
 
         def __setitem__(self, key, value):
+            if key in self:
+                self.move_to_end(key)
             super().__setitem__(key, value)
             if len(self) > self.maxsize:
                 oldest = next(iter(self))
